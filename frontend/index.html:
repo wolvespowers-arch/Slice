@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Slice</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Slice</h1>
+  <p class="sub">Drop in a video. Get the best clips, captioned.</p>
+
+  <input id="url" type="url" placeholder="Paste a video link">
+  <p class="sub">or</p>
+  <input id="file" type="file" accept="video/*">
+
+  <button id="go">Slice it</button>
+
+  <p id="status" class="sub"></p>
+  <div id="clips"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
