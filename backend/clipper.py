@@ -1,7 +1,7 @@
 import json
 import re
 
-import anthropic
+from groq import Groq
 
 
 def transcript_lines(words, per_line=14):
@@ -32,16 +32,18 @@ Reply with ONLY a JSON list, no other text. Each item:
 Transcript:
 {transcript_lines(words)}"""
 
-    client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY
-    msg = client.messages.create(
-        model="claude-sonnet-5-5",
-        max_tokens=1500,
+    client = Groq()  # reads GROQ_API_KEY
+    resp = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=1500,
     )
-
-    text = msg.content[0].text.strip()
-    text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.M).strip()
-    raw = json.loads(text)
+    text = resp.choices[0].message.content or ""
+    found = re.search(r"\[.*\]", text, re.S)
+    if not found:
+        raise RuntimeError("The AI did not return clips. Try again.")
+    raw = json.loads(found.group(0))
 
     picks = []
     for p in raw:
