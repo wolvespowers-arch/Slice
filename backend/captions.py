@@ -2,29 +2,42 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from faster_whisper import WhisperModel
-
-_model = None
+from groq import Groq
 
 
-def get_model():
-    global _model
-    if _model is None:
-        _model = WhisperModel("base", device="cpu", compute_type="int8")
-    return _model
+def _get(w, key):
+    return w[key] if isinstance(w, dict) else getattr(w, key)
 
 
 def transcribe(source):
-    segments, _ = get_model().transcribe(str(source), word_timestamps=True)
-    words = []
-    for seg in segments:
-        for w in seg.words or []:
-            words.append({
-                "word": w.word.strip(),
-                "start": w.start,
-                "end": w.end,
-            })
-    return words
+    with tempfile.TemporaryDirectory() as tmp:
+        audio = Path(tmp) / "audio.mp3"
+        cmd = [
+            "ffmpeg", "-y", "-i", str(source),
+            "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k", str(audio),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError("Could not read audio: " + result.stderr[-300:])
+
+        client = Groq()  # reads GROQ_API_KEY
+        with open(audio, "rb") as f:
+            resp = client.audio.transcriptions.create(
+                file=("audio.mp3", f.read()),
+                model="whisper-large-v3-turbo",
+                response_format="verbose_json",
+                timestamp_granularities=["word"],
+            )
+
+    raw = getattr(resp, "words", None) or []
+    return [
+        {
+            "word": str(_get(w, "word")).strip(),
+            "start": float(_get(w, "start")),
+            "end": float(_get(w, "end")),
+        }
+        for w in raw
+    ]
 
 
 def stamp(t):
