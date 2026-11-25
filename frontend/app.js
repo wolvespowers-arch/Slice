@@ -1,4 +1,3 @@
-// Change this to your server address once the backend is live
 const API = "https://slice-6.onrender.com";
 
 const go = document.getElementById("go");
@@ -6,7 +5,9 @@ const statusEl = document.getElementById("status");
 const clipsEl = document.getElementById("clips");
 
 go.addEventListener("click", async () => {
-  const url = document.getElementById("url").value.trim();
+  const raw = document.getElementById("url").value.trim();
+  const found = raw.match(/https?:\/\/\S+/);
+  const url = found ? found[0] : raw;
   const file = document.getElementById("file").files[0];
 
   if (!url && !file) {
@@ -24,7 +25,14 @@ go.addEventListener("click", async () => {
 
   try {
     const res = await fetch(API + "/slice", { method: "POST", body: form });
-    if (!res.ok) throw new Error("Server error " + res.status);
+    if (!res.ok) {
+      let msg = "Server error " + res.status;
+      try {
+        const j = await res.json();
+        if (j.detail) msg = j.detail;
+      } catch (e) {}
+      throw new Error(msg);
+    }
     const data = await res.json();
     showClips(data.clips);
     statusEl.textContent = data.clips.length + " clips ready.";
@@ -67,4 +75,4 @@ function showClips(clips) {
     box.append(title, score, reason, video, link);
     clipsEl.appendChild(box);
   });
-                }
+}
