@@ -22,7 +22,7 @@ def pick_clips(words, max_clips=5):
 Timestamps in brackets are seconds from the start. The video is {int(total)} seconds long.
 
 Pick up to {max_clips} clips. Each clip must:
-- be 20 to 60 seconds long
+- be 20 to 60 seconds long (if the whole video is shorter than 20 seconds, use the best part of it)
 - start on a strong hook and end on a complete thought
 - make sense without the rest of the video
 
@@ -34,10 +34,11 @@ Transcript:
 
     client = Groq()  # reads GROQ_API_KEY
     resp = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3,
-        max_tokens=1500,
+        max_tokens=4000,
+        extra_body={"reasoning_effort": "low"},
     )
     text = resp.choices[0].message.content or ""
     found = re.search(r"\[.*\]", text, re.S)
@@ -49,7 +50,7 @@ Transcript:
     for p in raw:
         start = max(0.0, float(p["start"]))
         end = min(total, float(p["end"]))
-        if end - start < 10:
+        if end - start < 5:
             continue
         picks.append({
             "start": start,
