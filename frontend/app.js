@@ -75,4 +75,4 @@ function showClips(clips) {
     box.append(title, score, reason, video, link);
     clipsEl.appendChild(box);
   });
-}
+      }
