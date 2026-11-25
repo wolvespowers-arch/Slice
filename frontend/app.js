@@ -1,5 +1,5 @@
 // Change this to your server address once the backend is live
-const API = "http://localhost:8000";
+const API = "https://slice-6.onrender.com";
 
 const go = document.getElementById("go");
 const statusEl = document.getElementById("status");
